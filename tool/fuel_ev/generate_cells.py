@@ -33,8 +33,8 @@ BASE32 = "0123456789bcdefghjkmnpqrstuvwxyz"
 OVERPASS_URLS = [
     "https://overpass-api.de/api/interpreter",
     "https://overpass.kumi.systems/api/interpreter",
-    "https://overpass.nchc.org.tw/api/interpreter",
 ]
+OVERPASS_HEADERS = {"User-Agent": "TollSarthi/1.0 (fuel-ev-data-pipeline)"}
 
 # India split into 8 bbox chunks (2 lat bands x 4 lon bands) to keep each
 # Overpass query under the timeout. Format: (south, west, north, east).
@@ -125,7 +125,8 @@ def query_overpass(south, west, north, east, retries=4):
     for url in OVERPASS_URLS:
         for attempt in range(retries):
             try:
-                resp = requests.post(url, data={"data": ql}, timeout=240)
+                resp = requests.post(url, data={"data": ql}, timeout=240,
+                   headers=OVERPASS_HEADERS)
             except requests.RequestException as e:
                 last_err = e
                 wait = 10 * (attempt + 1)
