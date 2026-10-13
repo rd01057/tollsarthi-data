@@ -1,0 +1,52 @@
+# Weekly refresh of TollSarthi fuel/EV station data.
+#
+# 1. Runs tool/fuel_ev/generate_cells.py (OSM amenity=fuel + amenity=charging
+#    for India -> one .json.gz per Geohash-4 cell).
+# 2. Deploys the files to the gh-pages branch under v1/ so they are served
+#    by GitHub Pages at https://<username>.github.io/<repo>/v1/{cell}.json.gz
+#
+# No secrets needed — the built-in GITHUB_TOKEN deploys the pages.
+# No card, no external accounts. The data is public OpenStreetMap data,
+# so the repo should be PUBLIC (GitHub Pages on private repos needs a
+# paid plan).
+
+name: Fuel/EV weekly refresh
+
+on:
+  schedule:
+    - cron: '0 2 * * 0'  # every Sunday 02:00 UTC
+  workflow_dispatch:      # manual trigger from the Actions tab
+
+permissions:
+  contents: write        # needed to push the gh-pages branch
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Generate fuel/EV cells
+        run: python tool/fuel_ev/generate_cells.py --out output
+
+      - name: Disable Jekyll on Pages
+        run: touch output/.nojekyll
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./output
+          destination_dir: v1
+          keep_files: true
